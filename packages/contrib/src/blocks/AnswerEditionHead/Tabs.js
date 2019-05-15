@@ -11,10 +11,17 @@ const Container = styled(Flex)`
 export const TABS = {
   EDITOR: 0,
   REFERENCES: 1,
-  TAGS: 2
+  SUGGESTIONS: 2,
+  TAGS: 3
 };
 
-export default ({ currentTab, onChange, referencesCount, tagsCount }) => (
+export default ({
+  currentTab,
+  onChange,
+  referencesCount,
+  suggestionsCount,
+  tagsCount
+}) => (
   <Container>
     <Tab
       isActive={currentTab === TABS.EDITOR}
@@ -33,6 +40,12 @@ export default ({ currentTab, onChange, referencesCount, tagsCount }) => (
       onClick={() => onChange(TABS.TAGS)}
     >
       {`Étiquettes (${tagsCount})`}
+    </Tab>
+    <Tab
+      isActive={currentTab === TABS.SUGGESTIONS}
+      onClick={() => onChange(TABS.SUGGESTIONS)}
+    >
+      {`Suggestions (${suggestionsCount})`}
     </Tab>
   </Container>
 );

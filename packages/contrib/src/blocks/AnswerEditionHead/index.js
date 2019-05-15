@@ -26,6 +26,7 @@ export default ({
   onSubmit,
   onTabChange,
   referencesCount,
+  suggestionsCount,
   tagsCount,
   title
 }) => (
@@ -39,6 +40,7 @@ export default ({
         currentTab={currentTab}
         onChange={onTabChange}
         referencesCount={referencesCount}
+        suggestionsCount={suggestionsCount}
         tagsCount={tagsCount}
       />
     </Flex>

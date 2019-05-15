@@ -8,6 +8,7 @@ import styled from "styled-components";
 import AnswerEditionContent from "../src/blocks/AnswerEditionContent";
 import AnswerEditionHead from "../src/blocks/AnswerEditionHead";
 import AnswerEditionReferences from "../src/blocks/AnswerEditionReferences";
+import AnswerEditionSuggestions from "../src/blocks/AnswerEditionSuggestions";
 import AnswerEditionTags from "../src/blocks/AnswerEditionTags";
 import Main from "../src/layouts/Main";
 import SavingSpinner from "../src/elements/SavingSpinner";
@@ -42,7 +43,8 @@ export default class extends React.Component {
       isSaving: false,
       lastAnswerValue: "",
       me: null,
-      savingSpinnerTimeout: 0
+      savingSpinnerTimeout: 0,
+      suggestions: []
     };
 
     this.allTags = [];
@@ -50,6 +52,8 @@ export default class extends React.Component {
 
     this.deleteReference = debounce(this._deleteReference.bind(this), 500);
     this.insertReference = debounce(this._insertReference.bind(this), 500);
+    this.deleteSuggestion = debounce(this._deleteSuggestion.bind(this), 500);
+    this.insertSuggestion = debounce(this._insertSuggestion.bind(this), 500);
     this.deleteTag = debounce(this._deleteTag.bind(this), 500);
     this.insertTag = debounce(this._insertTag.bind(this), 500);
     this.saveAnswerValue = debounce(this._saveAnswerValue.bind(this), 500);
@@ -65,17 +69,19 @@ export default class extends React.Component {
     this.axios = customAxios();
 
     try {
-      const tags = await this.axios.get(`/tags`);
-      const answers = await this.axios.get(
+      const { data: answers } = await this.axios.get(
         `/contributor_answers?id=eq.${this.props.id}`
       );
-      const laborCodeReferences = await axios.get(
+      const { data: laborCodeReferences } = await axios.get(
         `/static/data/labor-law-references.json`
       );
+      const { data: tags } = await this.axios.get(`/tags`);
 
-      this.allTags = tags.data;
-      this.laborCodeReferences = laborCodeReferences.data;
-      this.originalAnswer = answers.data[0];
+      this.laborCodeReferences = laborCodeReferences;
+      this.originalAnswer = answers[0];
+      this.allTags = tags;
+
+      await this.loadSuggestions();
 
       this.setState({
         isLoading: false,
@@ -267,6 +273,48 @@ export default class extends React.Component {
     this.setState({ isSaving: false });
   }
 
+  async loadSuggestions() {
+    const { data: suggestions } = await this.axios.get(
+      `/answers_suggestions?answer_id=eq.${this.props.id}`
+    );
+
+    this.setState({ suggestions });
+  }
+
+  async _insertSuggestion(value) {
+    this.setState({ isSaving: true });
+
+    try {
+      const uri = `/answers_suggestions`;
+      const data = {
+        answer_id: this.props.id,
+        value
+      };
+
+      await this.axios.post(uri, data);
+      await this.loadSuggestions();
+    } catch (err) {
+      console.warn(err);
+    }
+
+    this.setState({ isSaving: false });
+  }
+
+  async _deleteSuggestion(id) {
+    this.setState({ isSaving: true });
+
+    try {
+      const uri = makeApiFilter("/answers_suggestions", { id });
+
+      await this.axios.delete(uri);
+      await this.loadSuggestions();
+    } catch (err) {
+      console.warn(err);
+    }
+
+    this.setState({ isSaving: false });
+  }
+
   showSavingSpinner() {
     if (this.state.hasSavingSpinner) {
       clearTimeout(this.state.savingSpinnerTimeout);
@@ -303,6 +351,15 @@ export default class extends React.Component {
             onAdd={this.insertReference.bind(this)}
             onRemove={this.deleteReference.bind(this)}
             references={this.originalAnswer.references}
+          />
+        );
+
+      case TABS.SUGGESTIONS:
+        return (
+          <AnswerEditionSuggestions
+            onAdd={this.insertSuggestion.bind(this)}
+            onRemove={this.deleteSuggestion.bind(this)}
+            suggestions={this.state.suggestions}
           />
         );
 
@@ -343,6 +400,7 @@ export default class extends React.Component {
           onSubmit={() => this.requestForAnswerValidation()}
           onTabChange={this.switchTab.bind(this)}
           referencesCount={this.originalAnswer.references.length}
+          suggestionsCount={this.state.suggestions.length}
           tagsCount={this.originalAnswer.tags.length}
           title={this.originalAnswer.question}
         />

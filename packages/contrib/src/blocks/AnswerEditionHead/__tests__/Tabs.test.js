@@ -30,6 +30,12 @@ describe("[Contrib] blocks/AnswerEditionHead/<Tabs />", () => {
   });
 
   it("should trigger onChange() with the expected param (2)", () => {
+    fireEvent.click(getByText(/Suggestions \(\d+\)/));
+
+    expect(props.onChange).toHaveBeenCalledWith(TABS.SUGGESTIONS);
+  });
+
+  it("should trigger onChange() with the expected param (3)", () => {
     fireEvent.click(getByText(/Étiquettes \(\d+\)/));
 
     expect(props.onChange).toHaveBeenCalledWith(TABS.TAGS);
