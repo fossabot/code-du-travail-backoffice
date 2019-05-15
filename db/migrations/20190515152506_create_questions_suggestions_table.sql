@@ -2,8 +2,9 @@
 
 CREATE TABLE api.answers_suggestions(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  value text UNIQUE NOT NULL,
 
-  question_id uuid NOT NULL REFERENCES api.questions(id),
+  question_id uuid NOT NULL REFERENCES  api.questions(id),
   user_id uuid REFERENCES auth.users(id)
 );
 
